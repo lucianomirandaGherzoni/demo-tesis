@@ -1,5 +1,5 @@
-// URL base de la API — definida en FRONTEND/shared/config.js
-export { API_BASE_URL } from '../../Configuracion/config.js';
+// URL base de la API — definida localmente para evitar problemas de rutas según la raíz del servidor
+export { API_BASE_URL } from './config.js';
 
 // --- Estado Global de la Aplicación ---
 export let estado = {

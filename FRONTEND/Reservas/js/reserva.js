@@ -3,7 +3,7 @@
    Lógica de reserva multi-paso · Consume API de Vercel
    ============================================================ */
 
-import { API_BASE_URL } from '../../Configuracion/config.js';
+import { API_BASE_URL } from './config.js';
 
 // --- Estado de la reserva ---
 let pasoActual = 1;
