@@ -269,6 +269,7 @@ async function modificarTurno(req, res) {
             const estadoReservado = turnoExistente.estado === 'reservado';
             const fechaReprogramada = fecha !== fechaActual;
             const horaReprogramada = (hora_inicio || '').substring(0, 5) !== horaActual;
+            const turnoCancelado = estadoNormalizado === 'cancelado' && turnoExistente.estado !== 'cancelado';
 
             if (estadoReservado && fechaReprogramada && horaReprogramada) {
                 notificacionesTurno
@@ -278,6 +279,12 @@ async function modificarTurno(req, res) {
                         hora_fin: (turnoExistente.hora_fin || '').substring(0, 5)
                     })
                     .catch(error => console.error('[notificaciones] Error enviando email de reprogramación:', error?.message || error));
+            }
+
+            if (turnoCancelado) {
+                notificacionesTurno
+                    .enviarCancelacion(turnoId)
+                    .catch(error => console.error('[notificaciones] Error enviando email de cancelación:', error?.message || error));
             }
             res.status(200).json({ mensaje: `Turno con ID ${turnoId} modificado con éxito.` });
         } else {
@@ -469,6 +476,12 @@ async function registrarPagoTurno(req, res) {
 }
 
 async function procesarRecordatoriosTurnos(req, res) {
+    return res.status(200).json({
+        mensaje: 'Recordatorios por cron desactivados temporalmente.',
+        desactivado: true
+    });
+
+    /*
     const tokenConfigurado = (process.env.REMINDERS_CRON_TOKEN || '').trim();
     const tokenRecibido = (req.query.token || '').trim();
     const esCronVercel = Boolean(req.headers['x-vercel-cron']);
@@ -491,6 +504,7 @@ async function procesarRecordatoriosTurnos(req, res) {
             detalle: error.message
         });
     }
+    */
 }
 
 export default {

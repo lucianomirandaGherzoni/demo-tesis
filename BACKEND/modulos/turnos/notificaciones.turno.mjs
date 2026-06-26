@@ -37,6 +37,7 @@ function formatearFechaHora(fecha, horaInicio, horaFin) {
 function htmlBase({ tipo, titulo, subtitulo, detalleHtml, turno }) {
         const badges = {
                 confirmacion: { txt: 'Reserva confirmada', color: '#0f766e', fondo: '#ecfeff' },
+        cancelacion: { txt: 'Turno cancelado', color: '#b91c1c', fondo: '#fef2f2' },
                 reprogramacion: { txt: 'Turno reprogramado', color: '#b45309', fondo: '#fff7ed' },
                 recordatorio: { txt: 'Recordatorio 1h antes', color: '#1d4ed8', fondo: '#eff6ff' }
         };
@@ -197,6 +198,42 @@ async function enviarReprogramacion(turnoId, turnoAnterior) {
     return enviarEmail({ to, subject, html });
 }
 
+async function enviarCancelacion(turnoId) {
+    const turno = await modeloTurno.obtenerTurnoParaNotificacion(turnoId);
+    if (!turno) return { skipped: true, motivo: 'turno-no-encontrado' };
+    if (turno.estado !== 'cancelado') {
+        return { skipped: true, motivo: 'estado-no-cancelado' };
+    }
+
+    const resultados = [];
+    const subject = `Turno cancelado - ${turno.nombre_cliente}`;
+
+    if (turno.email_cliente) {
+        const htmlCliente = htmlBase({
+            tipo: 'cancelacion',
+            titulo: 'Tu turno fue cancelado',
+            subtitulo: 'La cancelación se registró correctamente en ELEVE Barberia.',
+            detalleHtml: 'Si queres un nuevo turno, podes reservar nuevamente desde la web.',
+            turno
+        });
+        resultados.push(await enviarEmail({ to: [turno.email_cliente], subject, html: htmlCliente }));
+    }
+
+    const adminEmail = obtenerEmailAdmin();
+    if (adminEmail) {
+        const htmlAdmin = htmlBase({
+            tipo: 'cancelacion',
+            titulo: 'Turno cancelado',
+            subtitulo: 'Se registró una cancelación de turno.',
+            detalleHtml: 'Aviso interno para administración.',
+            turno
+        });
+        resultados.push(await enviarEmail({ to: [adminEmail], subject: `[ADMIN] ${subject}`, html: htmlAdmin }));
+    }
+
+    return { enviados: resultados.length, resultados };
+}
+
 async function enviarRecordatorioTurno(turno) {
     const to = [turno.email_cliente];
     const subject = `Recordatorio de turno - ${turno.fecha} ${String(turno.hora_inicio || '').substring(0, 5)}`;
@@ -243,5 +280,6 @@ async function procesarRecordatorios() {
 export default {
     enviarConfirmacionReserva,
     enviarReprogramacion,
+    enviarCancelacion,
     procesarRecordatorios
 };
