@@ -1,4 +1,5 @@
 import modelo from './modelo.reserva.mjs';
+import notificacionesTurno from '../turnos/notificaciones.turno.mjs';
 
 // GET /api/v1/reservas/servicios
 async function obtenerServicios(req, res) {
@@ -119,6 +120,12 @@ async function crearReserva(req, res) {
             hora_inicio,
             observaciones
         });
+
+        if (turno?.id) {
+            notificacionesTurno
+                .enviarConfirmacionReserva(turno.id)
+                .catch(error => console.error('[notificaciones] Error enviando confirmación de reserva web:', error?.message || error));
+        }
 
         res.status(201).json({
             mensaje: "Reserva creada con éxito.",
