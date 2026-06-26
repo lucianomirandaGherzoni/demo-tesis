@@ -122,9 +122,11 @@ async function crearReserva(req, res) {
         });
 
         if (turno?.id) {
-            notificacionesTurno
-                .enviarConfirmacionReserva(turno.id)
-                .catch(error => console.error('[notificaciones] Error enviando confirmación de reserva web:', error?.message || error));
+            try {
+                await notificacionesTurno.enviarConfirmacionReserva(turno.id);
+            } catch (error) {
+                console.error('[notificaciones] Error enviando confirmación de reserva web:', error?.message || error);
+            }
         }
 
         res.status(201).json({

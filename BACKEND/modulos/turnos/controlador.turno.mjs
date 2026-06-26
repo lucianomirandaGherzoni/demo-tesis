@@ -137,9 +137,11 @@ async function agregarTurno(req, res) {
 
         const turnoCreado = await modelo.agregarTurno(req.body);
         if (turnoCreado.estado === 'reservado') {
-            notificacionesTurno
-                .enviarConfirmacionReserva(turnoCreado.id)
-                .catch(error => console.error('[notificaciones] Error enviando confirmación de reserva:', error?.message || error));
+            try {
+                await notificacionesTurno.enviarConfirmacionReserva(turnoCreado.id);
+            } catch (error) {
+                console.error('[notificaciones] Error enviando confirmación de reserva:', error?.message || error);
+            }
         }
         res.status(201).json({ mensaje: "Turno agregado con éxito", turno: turnoCreado });
     } catch (error) {
@@ -272,19 +274,23 @@ async function modificarTurno(req, res) {
             const turnoCancelado = estadoNormalizado === 'cancelado' && turnoExistente.estado !== 'cancelado';
 
             if (estadoReservado && fechaReprogramada && horaReprogramada) {
-                notificacionesTurno
-                    .enviarReprogramacion(turnoId, {
+                try {
+                    await notificacionesTurno.enviarReprogramacion(turnoId, {
                         fecha: fechaActual,
                         hora_inicio: horaActual,
                         hora_fin: (turnoExistente.hora_fin || '').substring(0, 5)
-                    })
-                    .catch(error => console.error('[notificaciones] Error enviando email de reprogramación:', error?.message || error));
+                    });
+                } catch (error) {
+                    console.error('[notificaciones] Error enviando email de reprogramación:', error?.message || error);
+                }
             }
 
             if (turnoCancelado) {
-                notificacionesTurno
-                    .enviarCancelacion(turnoId)
-                    .catch(error => console.error('[notificaciones] Error enviando email de cancelación:', error?.message || error));
+                try {
+                    await notificacionesTurno.enviarCancelacion(turnoId);
+                } catch (error) {
+                    console.error('[notificaciones] Error enviando email de cancelación:', error?.message || error);
+                }
             }
             res.status(200).json({ mensaje: `Turno con ID ${turnoId} modificado con éxito.` });
         } else {
