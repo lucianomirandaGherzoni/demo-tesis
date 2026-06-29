@@ -9,8 +9,19 @@ const LS_USUARIOS_KEY = 'eleve_usuarios'
 
 // Módulos permitidos según rol
 const MODULOS_POR_ROL = {
-  admin:    ['agenda', 'financiero', 'clientes', 'servicios', 'empleados', 'usuarios'],
-  empleado: ['agenda', 'clientes'],
+  admin:    ['agenda', 'financiero', 'clientes', 'servicios', 'caja', 'productos', 'negocio', 'empleados', 'usuarios'],
+  empleado: ['agenda', 'clientes', 'caja'],
+}
+
+function _modulosParaRol(rol) {
+  return MODULOS_POR_ROL[rol] || MODULOS_POR_ROL.empleado
+}
+
+/** Mantiene modulos al día si la sesión quedó guardada antes de agregar pestañas nuevas */
+function _sincronizarSesion(sesion) {
+  const actualizada = { ...sesion, modulos: _modulosParaRol(sesion.rol) }
+  guardarSesion(actualizada)
+  return actualizada
 }
 
 // ─────────────────────────────────────────────────
@@ -42,10 +53,10 @@ export function inicializarAuth() {
   const sesion = obtenerSesion()
 
   if (sesion) {
-    // Ya hay sesión activa: ocultar overlay y aplicar permisos
+    const sesionActualizada = _sincronizarSesion(sesion)
     _ocultarOverlay()
-    _aplicarPermisos(sesion)
-    _mostrarUsuarioEnHeader(sesion)
+    _aplicarPermisos(sesionActualizada)
+    _mostrarUsuarioEnHeader(sesionActualizada)
   } else {
     // Sin sesión: mostrar overlay de login
     _mostrarOverlay()
@@ -112,7 +123,7 @@ function _setupLoginForm() {
           usuario: match.username,
           nombre:  match.nombre,
           rol:     match.tipo,
-          modulos: MODULOS_POR_ROL[match.tipo] || MODULOS_POR_ROL.empleado,
+          modulos: _modulosParaRol(match.tipo),
         }
       }
     } catch { /* localStorage inaccesible */ }
@@ -278,17 +289,19 @@ function _setupLogout() {
 // ─────────────────────────────────────────────────
 function _aplicarPermisos(sesion) {
   const botones = document.querySelectorAll('.boton-navegacion[data-tab]')
+  const modulos = sesion.modulos || _modulosParaRol(sesion.rol)
 
   botones.forEach((btn) => {
     const tab = btn.dataset.tab
-    if (sesion.modulos.includes(tab)) {
+    if (modulos.includes(tab)) {
       btn.style.display = ''
+      btn.removeAttribute('aria-hidden')
     } else {
       btn.style.display = 'none'
-      // Si la pestaña activa ahora no está permitida, redirigir a la primera permitida
+      btn.setAttribute('aria-hidden', 'true')
       const contenidoActivo = document.getElementById(tab)
       if (contenidoActivo && contenidoActivo.classList.contains('activo')) {
-        const primerPermitido = sesion.modulos[0]
+        const primerPermitido = modulos[0]
         _activarTab(primerPermitido, botones)
       }
     }

@@ -186,8 +186,6 @@ import { renderFinancialData } from './finanzas.js'
 
 
 import * as ui from './ui.js'; // ui.initializeDate, ui.updateStats, etc.
-
-// --- Selectores DOM Principales ---
 const botonesNavegacion = document.querySelectorAll(".boton-navegacion");
 const selectorFecha = document.getElementById("date-picker");
 const selectorPeriodo = document.getElementById("period-selector");
@@ -199,6 +197,9 @@ import { inicializarClientes } from './clientes.js';
 import { inicializarServicios } from './servicios.js';
 import { inicializarEmpleados } from './empleados.js';
 import { inicializarUsuarios } from './usuarios.js';
+import { inicializarProductos } from './productos.js';
+import { inicializarCaja, refrescarCaja } from './caja.js';
+import { inicializarNegocio } from './negocio.js';
 // ===================================================
 // INICIALIZACIÓN
 // ===================================================
@@ -401,14 +402,23 @@ function setupPrincipalEventListeners() {
 
 
   document.addEventListener("keydown", (e) => {
-    // Solo comprueba el modal si existe
-    if (e.key === "Escape" && modalCita && modalCita.classList.contains("activo")) {
-      ui.closeAppointmentModal();
+    if (e.key === "Escape") {
+      if (document.body.classList.contains('menu-nav-abierto')) {
+        ui.cerrarMenuMobile();
+        return;
+      }
+      if (modalCita && modalCita.classList.contains("activo")) {
+        ui.closeAppointmentModal();
+      }
     }
   });
+  ui.inicializarMenuMobile();
   inicializarClientes();
   inicializarServicios();
   inicializarEmpleados();
+  inicializarProductos();
+  inicializarCaja();
+  inicializarNegocio();
   // inicializarUsuarios ya fue llamado al inicio del DOMContentLoaded
 }
 

@@ -2,6 +2,7 @@
 import { estado } from './estado.js';
 import { formatCurrency, generateTimeSlots } from './utilidades.js';
 import { fetchDashboardStats } from './api.js';
+import { refrescarCaja } from './caja.js';
 
 // --- Selectores del Modal Legacy ---
 const modalCita = document.getElementById("appointment-modal");
@@ -26,6 +27,57 @@ export function initializeDate() {
 }
 
 /**
+ * Cierra el menú lateral mobile (hamburguesa).
+ */
+export function cerrarMenuMobile() {
+  document.body.classList.remove('menu-nav-abierto')
+  const overlay = document.getElementById('menu-nav-overlay')
+  if (overlay) overlay.hidden = true
+  const btn = document.getElementById('btn-menu-hamburguesa')
+  if (btn) {
+    btn.setAttribute('aria-expanded', 'false')
+    const icon = btn.querySelector('i')
+    if (icon) icon.className = 'fas fa-bars'
+  }
+}
+
+function abrirMenuMobile() {
+  document.body.classList.add('menu-nav-abierto')
+  const overlay = document.getElementById('menu-nav-overlay')
+  if (overlay) overlay.hidden = false
+  const btn = document.getElementById('btn-menu-hamburguesa')
+  if (btn) {
+    btn.setAttribute('aria-expanded', 'true')
+    const icon = btn.querySelector('i')
+    if (icon) icon.className = 'fas fa-times'
+  }
+}
+
+function toggleMenuMobile() {
+  if (document.body.classList.contains('menu-nav-abierto')) cerrarMenuMobile()
+  else abrirMenuMobile()
+}
+
+/**
+ * Inicializa el menú hamburguesa en pantallas chicas.
+ */
+export function inicializarMenuMobile() {
+  const btn = document.getElementById('btn-menu-hamburguesa')
+  const overlay = document.getElementById('menu-nav-overlay')
+  const btnCerrar = document.getElementById('btn-cerrar-menu-nav')
+
+  btn?.addEventListener('click', toggleMenuMobile)
+  overlay?.addEventListener('click', cerrarMenuMobile)
+  btnCerrar?.addEventListener('click', cerrarMenuMobile)
+
+  document.querySelectorAll('.boton-navegacion[data-tab]').forEach((navBtn) => {
+    navBtn.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 768px)').matches) cerrarMenuMobile()
+    })
+  })
+}
+
+/**
  * Cambia entre las pestañas principales (Agenda, Finanzas).
  * @param {string} tabId - El ID de la pestaña a mostrar.
  */
@@ -46,6 +98,12 @@ export function switchTab(tabId) {
   if (typeof window.scrollTo === 'function') {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  if (tabId === 'caja') {
+    refrescarCaja();
+  }
+
+  cerrarMenuMobile();
 }
 
 /**
